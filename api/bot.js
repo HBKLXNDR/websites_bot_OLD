@@ -5,7 +5,9 @@ require('dotenv').config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: 'https://66ae3293fe7aad955f2182ca--magenta-naiad-786a93.netlify.app/'
+}));
 
 // Initialize bot
 const token = process.env.BOT_TOKEN || '';
