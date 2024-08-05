@@ -2,10 +2,10 @@
   "name": "web_app",
   "version": "1.0.0",
   "description": "Telegram Web Application on node.js",
-  "main": "index.js",
+  "main": "api/bot.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+    "dev": "nodemon api/bot.js",
+    "start": "node api/bot.js"
   },
   "keywords": [],
   "author": "",

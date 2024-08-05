@@ -1,13 +1,14 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
 // Initialize bot
-const token = process.env.BOT_TOKEN || '6864665229:AAEncCx8DSCa9mb918qTI-c37mlFw47Oz-I';
+const token = process.env.BOT_TOKEN || '';
 const webAppUrl = process.env.WEB_APP_URL || 'https://66ae3293fe7aad955f2182ca--magenta-naiad-786a93.netlify.app/';
 const bot = new TelegramBot(token, { polling: true });
 
