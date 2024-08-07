@@ -37,7 +37,10 @@ bot.on('message', async (msg) => {
             const data = JSON.parse(msg?.web_app_data?.data);
             console.log(data, chatId);
             await bot.sendMessage(chatId, `Дякую за зворотній зв'язок!, Ваш chatId: ${chatId}`);
-            await bot.sendMessage(process.env.TG_ID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`)
+            await bot.sendMessage(process.env.TG_ID, `Нова заявка:
+            email:${data.email},
+            номер:${data.number},
+            ім'я:${data.name}`)
 
             setTimeout(async () => {
                 await bot.sendMessage(chatId, `
