@@ -21,6 +21,8 @@ requiredEnvVars.forEach((varName) => {
 const webAppUrl = process.env.WEB_APP_URL;
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+
 
 app.use(cors({
     origin: webAppUrl
