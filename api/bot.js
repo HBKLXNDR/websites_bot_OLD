@@ -166,6 +166,21 @@ app.post('/web-data', celebrate({
     }
 });
 
+/**
+ * GET / endpoint.
+ * Returns a simple welcome message and some basic information.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {void}
+ */
+app.get('/', (req, res) => {
+    res.status(200).json({
+        message: 'Welcome to the Telegram Bot API!',
+        homepage: process.env.HOMEPAGE_URL,
+        webAppUrl: process.env.WEB_APP_URL
+    });
+});
+
 app.use(errors());
 
 // Global error handler
