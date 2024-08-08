@@ -18,10 +18,12 @@ requiredEnvVars.forEach((varName) => {
     }
 });
 
+const webAppUrl = process.env.WEB_APP_URL;
 const app = express();
 app.use(express.json());
+
 app.use(cors({
-    origin: process.env.WEB_APP_URL
+    origin: webAppUrl
 }));
 app.use(helmet());
 
@@ -50,7 +52,6 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Initialize bot
 const token = process.env.BOT_TOKEN;
-const webAppUrl = process.env.WEB_APP_URL;
 const bot = new TelegramBot(token, { polling: true });
 
 /**
@@ -177,7 +178,7 @@ app.get('/', (req, res) => {
     res.status(200).json({
         message: 'Welcome to the Telegram Bot API!',
         homepage: process.env.HOMEPAGE_URL,
-        webAppUrl: process.env.WEB_APP_URL
+        webAppUrl: webAppUrl
     });
 });
 
@@ -195,5 +196,9 @@ app.use((err, req, res, next) => {
     logger.error('Unhandled error', err);
     res.status(500).json({ message: 'Internal Server Error' });
 });
+
+const PORT = 8000;
+
+app.listen(PORT, () => console.log('server started on PORT ' + PORT))
 
 module.exports = app;
