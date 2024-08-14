@@ -3,14 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { celebrate, Joi, errors } = require('celebrate');
+const { errors } = require('celebrate');
 const winston = require('winston');
 require('dotenv').config();
 
-/**
- * Validate that all required environment variables are set.
- * @throws {Error} If a required environment variable is missing.
- */
+// Validate required environment variables
 const requiredEnvVars = ['BOT_TOKEN', 'WEB_APP_URL', 'HOMEPAGE_URL', 'TG_ID'];
 requiredEnvVars.forEach((varName) => {
     if (!process.env[varName]) {
@@ -18,25 +15,23 @@ requiredEnvVars.forEach((varName) => {
     }
 });
 
-const webAppUrl = process.env.WEB_APP_URL;
 const app = express();
+const webAppUrl = process.env.WEB_APP_URL;
+
+// Middleware setup
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-
-
-app.use(cors({
-    origin: webAppUrl
-}));
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: webAppUrl }));
 app.use(helmet());
 
 // Rate limiter middleware
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    max: 100 // limit each IP to 100 requests per window
 });
 app.use(limiter);
 
-// Logger setup
+// Logger setup with Winston
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.json(),
@@ -52,14 +47,11 @@ if (process.env.NODE_ENV !== 'production') {
     }));
 }
 
-// Initialize bot
+// Initialize Telegram Bot
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
-/**
- * Handles incoming messages to the bot.
- * @param {Object} msg - The message object from Telegram.
- */
+// Handle incoming messages to the bot
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
@@ -73,11 +65,7 @@ bot.on('message', async (msg) => {
     }
 });
 
-/**
- * Sends a welcome message with custom keyboard options.
- * @param {number} chatId - The Telegram chat ID.
- * @returns {Promise<void>}
- */
+// Send a welcome message with custom keyboard options
 async function sendStartMessage(chatId) {
     try {
         await bot.sendMessage(chatId, 'Заходьте на наш сайт!', {
@@ -95,11 +83,7 @@ async function sendStartMessage(chatId) {
     }
 }
 
-/**
- * Handles data received from a web app through the Telegram bot.
- * @param {Object} msg - The message object from Telegram.
- * @returns {Promise<void>}
- */
+// Handle data received from a web app via the Telegram bot
 async function handleWebAppData(msg) {
     const chatId = msg.chat.id;
     try {
@@ -111,15 +95,12 @@ async function handleWebAppData(msg) {
 
         await sendFollowUpMessage(chatId);
     } catch (error) {
+        console.error('Error handling web app data', error);
         logger.error('Error handling web app data', error);
     }
 }
 
-/**
- * Sends a follow-up message after a delay.
- * @param {number} chatId - The Telegram chat ID.
- * @returns {Promise<void>}
- */
+// Send a follow-up message after a delay
 async function sendFollowUpMessage(chatId) {
     try {
         await delay(3000);
@@ -129,29 +110,18 @@ async function sendFollowUpMessage(chatId) {
             завітайте на наш сайт! ${process.env.HOMEPAGE_URL}
         `);
     } catch (error) {
+        console.error('Error sending follow-up message', error);
         logger.error('Error sending follow-up message', error);
     }
 }
 
-/**
- * Delays execution for a specified number of milliseconds.
- * @param {number} ms - The number of milliseconds to delay.
- * @returns {Promise<void>} Resolves after the specified delay.
- */
+// Delay execution for a specified number of milliseconds
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Input validation middleware
-app.post('/web-data', celebrate({
-    body: Joi.object().keys({
-        queryId: Joi.string().required(),
-        products: Joi.array().items(Joi.object({
-            title: Joi.string().required()
-        })).required(),
-        totalPrice: Joi.number().required()
-    })
-}), async (req, res) => {
+// Input validation for /web-data endpoint
+app.post('/web-data', async (req, res) => {
     const { queryId, products, totalPrice } = req.body;
     try {
         await bot.answerWebAppQuery(queryId, {
@@ -159,23 +129,18 @@ app.post('/web-data', celebrate({
             id: queryId,
             title: 'Успішна купівля',
             input_message_content: {
-                message_text: ` Вітаю зі зверненням, ви купили товар на суму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
+                message_text: `Вітаю зі зверненням, ви купили товар на суму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
             }
         });
-        return res.status(200).json({});
+        res.status(200).json({});
     } catch (error) {
+        console.error('Error in /web-data endpoint', error);
         logger.error('Error in /web-data endpoint', error);
-        return res.status(500).json({});
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
-/**
- * GET / endpoint.
- * Returns a simple welcome message and some basic information.
- * @param {Object} req - The request object.
- * @param {Object} res - The response object.
- * @returns {void}
- */
+// GET / endpoint
 app.get('/', (req, res) => {
     res.status(200).json({
         message: 'Welcome to the Telegram Bot API!',
@@ -187,20 +152,12 @@ app.get('/', (req, res) => {
 app.use(errors());
 
 // Global error handler
-/**
- * Global error handler middleware.
- * @param {Object} err - The error object.
- * @param {Object} req - The request object.
- * @param {Object} res - The response object.
- * @param {Function} next - The next middleware function.
- */
 app.use((err, req, res, next) => {
     logger.error('Unhandled error', err);
     res.status(500).json({ message: 'Internal Server Error' });
 });
 
-const PORT = 8000;
-
-app.listen(PORT, () => console.log('server started on PORT ' + PORT))
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`Server started on PORT ${PORT}`));
 
 module.exports = app;
