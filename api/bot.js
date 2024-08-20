@@ -55,7 +55,7 @@ const bot = new TelegramBot(token, { polling: true });
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
-
+    console.log(msg);
     if (text === '/start') {
         await sendStartMessage(chatId);
     }
@@ -65,9 +65,10 @@ bot.on('message', async (msg) => {
     }
 });
 
+
+
 // Send a welcome message with custom keyboard options
 async function sendStartMessage(chatId) {
-    try {
         await bot.sendMessage(chatId, 'Заходьте на наш сайт!', {
             reply_markup: {
                 keyboard: [
@@ -77,10 +78,10 @@ async function sendStartMessage(chatId) {
                     ]
                 ]
             }
+        }).catch((error)=> {
+            logger.error('Error sending start message', error);
+            console.log(error, error.code , error.response.body); // code => 'ETELEGRAM' , response.body => { ok: false, error_code: 400, description: 'Bad Request: chat not found' }
         });
-    } catch (error) {
-        logger.error('Error sending start message', error);
-    }
 }
 
 // Handle data received from a web app via the Telegram bot
@@ -90,8 +91,14 @@ async function handleWebAppData(msg) {
         const data = JSON.parse(msg?.web_app_data?.data);
         logger.info(`Received data from chatId ${chatId}:`, data);
 
-        await bot.sendMessage(chatId, `Дякую за зворотній зв'язок!, Ваш chatId: ${chatId}`);
-        await bot.sendMessage(process.env.TG_ID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`);
+        await bot.sendMessage(chatId, `Дякую за зворотній зв'язок!, Ваш chatId: ${chatId}`).catch((error)=> {
+            logger.error('Error sending feedback ID message', error);
+            console.log(error, error.code , error.response.body);
+        });
+        await bot.sendMessage(process.env.TG_ID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`).catch((error)=> {
+            logger.error('Error sending new lead message', error);
+            console.log(error, error.code , error.response.body);
+        });;
 
         await sendFollowUpMessage(chatId);
     } catch (error) {

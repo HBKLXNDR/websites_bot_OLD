@@ -45,3 +45,4 @@ config/env/
 
 # Netlify configuration files
 .netlify/
+.vercel
