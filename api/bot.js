@@ -182,6 +182,15 @@ app.post('/web-data', async (req, res) => {
         });
         res.status(200).json({});
     } catch (error) {
+        console.log('it did not happen(')
+        await bot.answerWebAppQuery(queryId, {
+            type: 'article',
+            id: queryId,
+            title: 'НЕ успішна купівля',
+            input_message_content: {
+                message_text: `Вийшла помилка з придбанням товару на сумму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
+            }
+        });
         console.error('Error in /web-data endpoint', error);
         logger.error('Error in /web-data endpoint', error);
         res.status(500).json({ message: 'Internal Server Error' });
