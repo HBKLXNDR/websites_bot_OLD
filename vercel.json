@@ -1,4 +1,4 @@
 { "version": 2,
 "builds": [{"src": "./api/bot.js", "use": "@vercel/node"}],
-"routes":[{ "source": "/(.*)", "destination": "/api" }]
+"routes":[{ "src": "/(.*)", "destination": "/api/bot.js" }]
 }
