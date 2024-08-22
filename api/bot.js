@@ -180,7 +180,7 @@ app.post('/web-data', async (req, res) => {
                 message_text: `Вітаю зі зверненням, ви купили товар на суму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
             }
         });
-        res.status(200).json({});
+        return res.status(200).json({});
     } catch (error) {
         console.log('it did not happen(')
         await bot.answerWebAppQuery(queryId, {
@@ -193,13 +193,13 @@ app.post('/web-data', async (req, res) => {
         });
         console.error('Error in /web-data endpoint', error);
         logger.error('Error in /web-data endpoint', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
 // GET / endpoint
 app.get('/', (req, res) => {
-    res.status(200).json({
+    return res.status(200).json({
         message: 'Welcome to the Telegram Bot API!',
         homepage: process.env.HOMEPAGE_URL,
         webAppUrl: webAppUrl
