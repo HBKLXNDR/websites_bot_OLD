@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { errors } = require('celebrate');
 const winston = require('winston');
 require('dotenv').config();
 
@@ -50,6 +49,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Initialize Telegram Bot
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
+console.log(bot);
 
 // Handle incoming messages to the bot
 bot.on('message', async (msg) => {
@@ -63,6 +63,44 @@ bot.on('message', async (msg) => {
     if (msg?.web_app_data?.data) {
         await handleWebAppData(msg);
     }
+});
+
+// Matches /form
+bot.onText(/\/form/, async (msg) => {
+    const chatId = msg.chat.id;
+
+    await bot.sendMessage(chatId, 'Щоб відкрити форму, будь ласка, натисніть на кнопку нижче:', {
+        reply_markup: {
+            keyboard: [
+                [
+                    { text: 'Відкрити форму', web_app: { url: `${webAppUrl}/form` } }
+                ]
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true
+        }
+    }).catch((error) => {
+        console.error('Error sending form message:', error);
+    });
+});
+
+// Matches /shop
+bot.onText(/\/shop/, async (msg) => {
+    const chatId = msg.chat.id;
+
+    await bot.sendMessage(chatId, 'Щоб перейти до нашого магазину, натисніть кнопку нижче:', {
+        reply_markup: {
+            keyboard: [
+                [
+                    { text: 'Замовити сайт', web_app: { url: webAppUrl } }
+                ]
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: true
+        }
+    }).catch((error) => {
+        console.error('Error sending shop message:', error);
+    });
 });
 
 
@@ -91,13 +129,15 @@ async function handleWebAppData(msg) {
         const data = JSON.parse(msg?.web_app_data?.data);
         logger.info(`Received data from chatId ${chatId}:`, data);
 
-        await bot.sendMessage(chatId, `Дякую за зворотній зв'язок!, Ваш chatId: ${chatId}`).catch((error)=> {
-            logger.error('Error sending feedback ID message', error);
-            console.log(error, error.code , error.response.body);
+        await bot.sendMessage(chatId, `Дякую за зворотній зв'язок!, Ваш chatId: ${chatId}`)
+            .catch((error)=> {
+                logger.error('Error sending feedback ID message', error);
+                console.log(error, error.code , error.response.body);
         });
-        await bot.sendMessage(process.env.TG_ID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`).catch((error)=> {
-            logger.error('Error sending new lead message', error);
-            console.log(error, error.code , error.response.body);
+        await bot.sendMessage(process.env.TG_ID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`)
+            .catch((error)=> {
+                logger.error('Error sending new lead message', error);
+                console.log(error, error.code , error.response.body);
         });;
 
         await sendFollowUpMessage(chatId);
@@ -131,6 +171,7 @@ function delay(ms) {
 app.post('/web-data', async (req, res) => {
     const { queryId, products, totalPrice } = req.body;
     try {
+        console.log('it happenned!!')
         await bot.answerWebAppQuery(queryId, {
             type: 'article',
             id: queryId,
@@ -155,8 +196,6 @@ app.get('/', (req, res) => {
         webAppUrl: webAppUrl
     });
 });
-
-app.use(errors());
 
 // Global error handler
 app.use((err, req, res, next) => {
