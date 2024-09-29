@@ -2,7 +2,6 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 require('dotenv').config();
 
@@ -23,13 +22,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: webAppUrl }));
 app.use(helmet());
 
-// Rate limiter middleware
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per window
-});
-app.use(limiter);
-
 // Logger setup with Winston
 const logger = winston.createLogger({
     level: 'info',
@@ -49,7 +41,6 @@ if (process.env.NODE_ENV !== 'production') {
 // Initialize Telegram Bot
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
-console.log(bot);
 
 // Handle incoming messages to the bot
 bot.on('message', async (msg) => {
