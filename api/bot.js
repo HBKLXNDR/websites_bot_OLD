@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const winston = require('winston');
 require('dotenv').config();
+const path = require('path');
 
 // Validate required environment variables
 const requiredEnvVars = ['BOT_TOKEN', 'WEB_APP_URL', 'HOMEPAGE_URL', 'TG_ID'];
@@ -160,7 +161,8 @@ function delay(ms) {
 
 // Input validation for /web-data endpoint
 app.post('/web-data', async (req, res) => {
-    const { queryId, products, totalPrice } = req.body;
+    const { products, totalPrice, queryId } = req.body;
+    console.log(products, totalPrice, queryId);
     try {
         console.log('it happenned!!')
         await bot.answerWebAppQuery(queryId, {
