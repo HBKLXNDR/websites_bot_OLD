@@ -139,7 +139,7 @@ const html = `
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hello from Render!</title>
+    <title>Hello from Telegram BOT!</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
       setTimeout(() => {
@@ -200,7 +200,6 @@ app.get("/", (req, res) => res.type('html').send(html));
 // Input validation for /web-data endpoint
 app.post('/web-data', async (req, res) => {
     const { products, totalPrice, queryId } = req.body;
-    console.log(products, totalPrice, queryId);
     try {
         console.log('it happenned!!')
         await bot.answerWebAppQuery(queryId, {
