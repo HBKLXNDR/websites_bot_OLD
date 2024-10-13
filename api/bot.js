@@ -1,10 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const winston = require('winston');
 require('dotenv').config();
-const path = require('path');
 
 // Validate required environment variables
 const requiredEnvVars = ['BOT_TOKEN', 'WEB_APP_URL', 'HOMEPAGE_URL', 'TG_ID'];
@@ -20,24 +17,8 @@ const webAppUrl = process.env.WEB_APP_URL;
 // Middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: webAppUrl }));
-app.use(helmet());
+app.use(cors({ origin: '*' }));
 
-// Logger setup with Winston
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.json(),
-    transports: [
-        new winston.transports.File({ filename: 'error.log', level: 'error' }),
-        new winston.transports.File({ filename: 'combined.log' }),
-    ],
-});
-
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.simple(),
-    }));
-}
 
 // Initialize Telegram Bot
 const token = process.env.BOT_TOKEN;
@@ -95,8 +76,6 @@ bot.onText(/\/shop/, async (msg) => {
     });
 });
 
-
-
 // Send a welcome message with custom keyboard options
 async function sendStartMessage(chatId) {
         await bot.sendMessage(chatId, 'Заходьте на наш сайт!', {
@@ -109,7 +88,6 @@ async function sendStartMessage(chatId) {
                 ]
             }
         }).catch((error)=> {
-            logger.error('Error sending start message', error);
             console.log(error, error.code , error.response.body); // code => 'ETELEGRAM' , response.body => { ok: false, error_code: 400, description: 'Bad Request: chat not found' }
         });
 }
@@ -119,23 +97,22 @@ async function handleWebAppData(msg) {
     const chatId = msg.chat.id;
     try {
         const data = JSON.parse(msg?.web_app_data?.data);
-        logger.info(`Received data from chatId ${chatId}:`, data);
+        console.error(`Received data from chatId ${chatId}:`, data);
 
         await bot.sendMessage(chatId, `Дякую за зворотній зв'язок!, Ваш chatId: ${chatId}`)
             .catch((error)=> {
-                logger.error('Error sending feedback ID message', error);
+                console.error('Error sending feedback ID message', error);
                 console.log(error, error.code , error.response.body);
         });
         await bot.sendMessage(process.env.TG_ID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`)
             .catch((error)=> {
-                logger.error('Error sending new lead message', error);
+                console.error('Error sending new lead message', error);
                 console.log(error, error.code , error.response.body);
         });;
 
         await sendFollowUpMessage(chatId);
     } catch (error) {
         console.error('Error handling web app data', error);
-        logger.error('Error handling web app data', error);
     }
 }
 
@@ -150,7 +127,6 @@ async function sendFollowUpMessage(chatId) {
         `);
     } catch (error) {
         console.error('Error sending follow-up message', error);
-        logger.error('Error sending follow-up message', error);
     }
 }
 
@@ -158,6 +134,68 @@ async function sendFollowUpMessage(chatId) {
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+const html = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello from Render!</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          disableForReducedMotion: true
+        });
+      }, 500);
+    </script>
+    <style>
+      @import url("https://p.typekit.net/p.css?s=1&k=vnd5zic&ht=tk&f=39475.39476.39477.39478.39479.39480.39481.39482&a=18673890&app=typekit&e=css");
+      @font-face {
+        font-family: "neo-sans";
+        src: url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
+        font-style: normal;
+        font-weight: 700;
+      }
+      html {
+        font-family: neo-sans;
+        font-weight: 700;
+        font-size: calc(62rem / 16);
+      }
+      body {
+        background: white;
+      }
+      section {
+        border-radius: 1em;
+        padding: 1em;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-right: -50%;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+  </head>
+  <body>
+    <section>
+      Hello from Render!
+    </section>
+  </body>
+</html>
+`
+
+app.get("/", (req, res) => res.type('html').send(html));
+
+// // GET / endpoint
+// app.get('/', (req, res) => {
+//     return res.status(200).json({
+//         message: 'Welcome to the Telegram Bot API!',
+//         homepage: process.env.HOMEPAGE_URL,
+//         webAppUrl: webAppUrl
+//     });
+// });
 
 // Input validation for /web-data endpoint
 app.post('/web-data', async (req, res) => {
@@ -185,24 +223,8 @@ app.post('/web-data', async (req, res) => {
             }
         });
         console.error('Error in /web-data endpoint', error);
-        logger.error('Error in /web-data endpoint', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
-});
-
-// GET / endpoint
-app.get('/', (req, res) => {
-    return res.status(200).json({
-        message: 'Welcome to the Telegram Bot API!',
-        homepage: process.env.HOMEPAGE_URL,
-        webAppUrl: webAppUrl
-    });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-    logger.error('Unhandled error', err);
-    res.status(500).json({ message: 'Internal Server Error' });
 });
 
 const PORT = process.env.PORT || 8000;
