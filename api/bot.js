@@ -19,7 +19,6 @@ const webAppUrl = process.env.WEB_APP_URL;
 const homePageURL = process.env.HOMEPAGE_URL;
 
 const app = express();
-
 // Middleware setup
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -99,6 +98,13 @@ bot.onText(/\/shop/, async (msg) => {
         console.error('Error sending shop message:', error);
     });
 });
+
+// Handle '/help' command
+bot.onText(/\/help/, (msg) => {
+    bot.sendMessage(msg.chat.id, 'Commands: /start, /help, /site, /shop, /form').catch((error) => {
+        console.log(error, error.code, error.response.body); // code => 'ETELEGRAM' , response.body => { ok: false, error_code: 400, description: 'Bad Request: chat not found' }
+    });
+})
 
 bot.on('polling_error', (error) => {
     console.log(error.code);  // => 'EFATAL'
