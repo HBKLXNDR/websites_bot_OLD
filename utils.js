@@ -3,19 +3,22 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Send a follow-up message after a delay
-async function sendFollowUpMessage(chatId) {
-    try {
-        await delay(3000);
-        await bot.sendMessage(chatId, `
-            Всю інформацію Ви отримаєте у цьому чаті: @financial_grammarly,
-            а поки наш менеджер займається обробкою Вашої заявки,
-            завітайте на наш сайт! ${process.env.HOMEPAGE_URL}
-        `);
-    } catch (error) {
-        console.error('Error sending follow-up message', error);
-    }
+// Validate required environment variables
+function variablesExistenceChecker() {
+    const requiredEnvVars = ['BOT_TOKEN', 'WEB_APP_URL', 'HOMEPAGE_URL', 'TG_ID', 'PORT'];
+    requiredEnvVars.forEach((varName) => {
+        if (!process.env[varName]) {
+            throw new Error(`Environment variable ${varName} is required`);
+        }
+    });
 }
 
+const variables = {
+    frontend: process.env.WEB_APP_URL,
+    websiteURL: process.env.HOMEPAGE_URL,
+    token: process.env.BOT_TOKEN,
+    telegramID: process.env.TG_ID,
+    port: process.env.PORT
+}
 
-module.exports = {sendFollowUpMessage};
+module.exports = {delay, variablesExistenceChecker, variables};

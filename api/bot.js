@@ -4,19 +4,10 @@ const cors = require('cors');
 require('dotenv').config();
 
 const {html} = require('../constants');
-const {sendFollowUpMessage} = require('../utils');
+const {delay, variablesExistenceChecker, variables} = require('../utils');
 
-// Validate required environment variables
-const requiredEnvVars = ['BOT_TOKEN', 'WEB_APP_URL', 'HOMEPAGE_URL', 'TG_ID', 'PORT'];
-requiredEnvVars.forEach((varName) => {
-    if (!process.env[varName]) {
-        throw new Error(`Environment variable ${varName} is required`);
-    }
-});
-
-// environment variables
-const webAppUrl = process.env.WEB_APP_URL;
-const homePageURL = process.env.HOMEPAGE_URL;
+//check for variables existence
+variablesExistenceChecker();
 
 const app = express();
 // Middleware setup
@@ -24,10 +15,12 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cors({origin: '*'}));
 
-// Initialize Telegram Bot
-const token = process.env.BOT_TOKEN;
-const bot = new TelegramBot(token, {polling: true});
+// environment variables
 
+// Initialize Telegram Bot
+const bot = new TelegramBot(variables.token, {polling: true});
+
+console.log(bot);
 // Handle incoming messages to the bot
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
@@ -50,7 +43,7 @@ bot.onText(/\/form/, async (msg) => {
         reply_markup: {
             keyboard: [
                 [
-                    {text: 'Відкрити форму', web_app: {url: `${webAppUrl}/form`}}
+                    {text: 'Відкрити форму', web_app: {url: `${variables.frontend}/form`}}
                 ]
             ],
             resize_keyboard: true,
@@ -68,8 +61,8 @@ bot.onText(/\/site/, async (msg) => {
         reply_markup: {
             keyboard: [
                 [
-                    {text: 'Відкрити сайт', web_app: {url: homePageURL}},
-                    {text: 'Залишити заявку на сайті', web_app: {url: `${homePageURL}/contact`}}
+                    {text: 'Відкрити сайт', web_app: {url: variables.websiteURL}},
+                    {text: 'Залишити заявку на сайті', web_app: {url: `${variables.websiteURL}/contact`}}
                 ]
             ],
             resize_keyboard: true,
@@ -88,7 +81,7 @@ bot.onText(/\/shop/, async (msg) => {
         reply_markup: {
             keyboard: [
                 [
-                    {text: 'Замовити сайт', web_app: {url: webAppUrl}}
+                    {text: 'Замовити сайт', web_app: {url: variables.frontend}}
                 ]
             ],
             resize_keyboard: true,
@@ -107,8 +100,22 @@ bot.onText(/\/help/, (msg) => {
 })
 
 bot.on('polling_error', (error) => {
-    console.log(error.code);  // => 'EFATAL'
+    console.log(error.code, 'polling error');  // => 'EFATAL'
 });
+
+// Send a follow-up message after a delay
+async function sendFollowUpMessage(chatId) {
+    try {
+        await delay(3000);
+        await bot.sendMessage(chatId, `
+            Всю інформацію Ви отримаєте у цьому чаті: @financial_grammarly,
+            а поки наш менеджер займається обробкою Вашої заявки,
+            завітайте на наш сайт! ${variables.websiteURL}
+        `);
+    } catch (error) {
+        console.error('Error sending follow-up message', error);
+    }
+}
 
 // Send a welcome message with custom keyboard options
 async function sendStartMessage(chatId) {
@@ -116,8 +123,8 @@ async function sendStartMessage(chatId) {
         reply_markup: {
             keyboard: [
                 [
-                    {text: 'Замовити сайт', web_app: {url: webAppUrl}},
-                    {text: 'Залишити заявку', web_app: {url: `${webAppUrl}/form`}}
+                    {text: 'Замовити сайт', web_app: {url: variables.frontend}},
+                    {text: 'Залишити заявку', web_app: {url: `${variables.frontend}/form`}}
                 ]
             ]
         }
@@ -138,7 +145,7 @@ async function handleWebAppData(msg) {
                 console.error('Error sending feedback ID message', error);
                 console.log(error, error.code, error.response.body);
             });
-        await bot.sendMessage(process.env.TG_ID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`)
+        await bot.sendMessage(variables.telegramID, `Нова заявка: ${data.email}, ${data.number}, ${data.name}`)
             .catch((error) => {
                 console.error('Error sending new lead message', error);
                 console.log(error, error.code, error.response.body);
@@ -184,7 +191,7 @@ app.post('/web-data', async (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 8000;
+const PORT = variables.port || 8000;
 app.listen(PORT, () => console.log(`Server started on PORT ${PORT}`));
 
 module.exports = app;
